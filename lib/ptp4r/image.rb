@@ -1,10 +1,11 @@
 module PTP4R
   
   class Image
+    require 'time'
     
     attr_accessor :handle, :size, :time, :filename
     
-    def initialize(d)
+    def initialize(d = nil)
       data = d unless d.nil?
     end
     

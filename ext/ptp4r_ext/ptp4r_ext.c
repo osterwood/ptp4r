@@ -68,10 +68,8 @@ VALUE t_devices(VALUE self) {
   return rb_iv_get(rb_cPTP, D_DEVICES);
 }
 
-VALUE t_files_bang(VALUE self, VALUE device_name) {
-  int busn = -1;
-  int devn = -1;
-  VALUE arr, devices;
+VALUE t_files(VALUE self, VALUE busn, VALUE devn) {
+  VALUE arr;
   
   PTPParams params;
   PTP_USB ptp_usb;
@@ -80,24 +78,8 @@ VALUE t_files_bang(VALUE self, VALUE device_name) {
   PTPObjectInfo oi;
   struct tm *tm;
   
-  devices = rb_iv_get(rb_cPTP, D_DEVICES);
-  
-  for (i = 0; i < num_devices; i++) {
-    VALUE camera = rb_ary_entry(devices, i);
-    
-    // printf("%s \n", STR2CSTR(rb_hash_aref(camera, D_MODEL)) );
-    // printf("%s \n", STR2CSTR(device_name) );
-    
-    if (rb_equal(rb_hash_aref(camera, rb_str_new2(D_MODEL)), device_name) == Qtrue) {
-      busn = FIX2INT(rb_hash_aref(camera, rb_str_new2(D_BUS)));
-      devn = FIX2INT(rb_hash_aref(camera, rb_str_new2(D_DEV)));
-    }
-  }
-  
-  // printf("%d/%d\n\n", busn, devn);
-  
-  if (busn == -1 || devn == -1)
-    return Qnil;
+  busn = FIX2INT(busn);
+  devn = FIX2INT(devn);
   
   if (open_camera(busn, devn, 0, &ptp_usb, &params, &dev) < 0)
     return Qnil;
@@ -149,23 +131,14 @@ static VALUE t_init(VALUE self) {
   return self;
 }
 
-static VALUE t_files(VALUE self, VALUE device) {
-  if (rb_iv_get(rb_cPTP, D_FILES) == Qnil) {
-    t_files_bang(self, device);
-  }
-  
-  return rb_iv_get(rb_cPTP, D_FILES);
-}
-
 void Init_ptp4r_ext() {
   VALUE rb_mPTP = rb_define_module("PTP4R");  
   rb_cPTP = rb_define_class_under (rb_mPTP, "Ext", rb_cObject);
   
   rb_define_method(rb_cPTP, "initialize", t_init, 0);
-  rb_define_method(rb_cPTP, "scan!", t_scan, 0);
+  rb_define_method(rb_cPTP, "devices!", t_scan, 0);
   
-  rb_define_method(rb_cPTP, "files!", t_files_bang, 1);
-  rb_define_method(rb_cPTP, "files", t_files, 1);
+  rb_define_method(rb_cPTP, "files", t_files, 2);
   
   rb_define_method(rb_cPTP, "devices", t_devices, 0);
 }
